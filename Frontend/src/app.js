@@ -1,37 +1,59 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 
 function App() {
   const [file, setFile] = useState(null);
   const [translate, setTranslate] = useState(false);
   const [targetLang, setTargetLang] = useState("en");
   const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!file) return;
+    if (!file) {
+      alert("Please select a file.");
+      return;
+    }
+    setLoading(true);
+    setError(null);
 
     const formData = new FormData();
     formData.append("file", file);
     formData.append("translate", translate);
     formData.append("target_lang", targetLang);
 
-    const response = await fetch("http://localhost:8000/transcribe", {
-      method: "POST",
-      body: formData,
-    });
-    const data = await response.json();
-    setResult(data);
+    try {
+      const response = await fetch("http://localhost:8000/transcribe", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Server error: " + response.statusText);
+      }
+
+      const data = await response.json();
+      setResult(data);
+    } catch (err) {
+      setError(err.message);
+    }
+    setLoading(false);
   };
 
   return (
-    <div>
-      <h1>Video/Audio Transcriber & Translator</h1>
+    <div style={{ padding: "20px" }}>
+      <h1>Transcribe & Translate Media</h1>
       <form onSubmit={handleSubmit}>
-        <input
-          type="file"
-          accept="audio/*,video/*"
-          onChange={(e) => setFile(e.target.files[0])}
-        />
+        <div>
+          <label>
+            Upload video/audio file:
+            <input type="file" accept="audio/*,video/*" onChange={handleFileChange} />
+          </label>
+        </div>
         <div>
           <label>
             <input
@@ -41,23 +63,36 @@ function App() {
             />
             Translate
           </label>
-          {translate && (
-            <input
-              type="text"
-              placeholder="Target language (e.g., en)"
-              value={targetLang}
-              onChange={(e) => setTargetLang(e.target.value)}
-            />
-          )}
         </div>
-        <button type="submit">Submit</button>
+        {translate && (
+          <div>
+            <label>
+              Target Language (e.g., en):
+              <input
+                type="text"
+                value={targetLang}
+                onChange={(e) => setTargetLang(e.target.value)}
+              />
+            </label>
+          </div>
+        )}
+        <button type="submit" disabled={loading}>
+          {loading ? "Processing..." : "Submit"}
+        </button>
       </form>
+
+      {error && (
+        <div style={{ color: "red" }}>
+          <p>Error: {error}</p>
+        </div>
+      )}
+
       {result && (
-        <div>
+        <div style={{ marginTop: "20px" }}>
           <h2>Transcription</h2>
           <p>{result.transcription}</p>
           <h2>SRT File</h2>
-          <pre>{result.srt}</pre>
+          <pre style={{ background: "#f0f0f0", padding: "10px" }}>{result.srt}</pre>
         </div>
       )}
     </div>

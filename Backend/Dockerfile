@@ -2,8 +2,10 @@
 FROM python:3.9-slim
 
 # Install ffmpeg (required by Whisper)
-RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
-
+RUN apt-get update && apt-get install -y \
+    git \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
 # Set the working directory in the container
 WORKDIR /app
 

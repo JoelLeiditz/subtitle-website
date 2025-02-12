@@ -1,13 +1,28 @@
 # backend/main.py
 import math
 from fastapi import FastAPI, UploadFile, File, Form
+from fastapi.middleware.cors import CORSMiddleware
 import shutil
 import whisper
 import os
 
 app = FastAPI()
+
+# List your allowed origins (e.g., your React dev server)
+origins = [
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # or allow all origins by using ["*"]
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Load the Whisper model (choose the size appropriate for your use case)
-model = whisper.load_model("base")
+model = whisper.load_model("tiny") # models: tiny, base, medium, large, turbo
 
 def seconds_to_srt_timestamp(seconds: float) -> str:
     """Convert seconds to SRT timestamp format: HH:MM:SS,ms"""
